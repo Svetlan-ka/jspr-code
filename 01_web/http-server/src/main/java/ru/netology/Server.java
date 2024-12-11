@@ -1,103 +1,111 @@
 package ru.netology;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Server {
-    final List<String> VALID_PATHS = List.of("/index.html", "/spring.svg", "/spring.png", "/resources.html",
-            "/styles.css", "/app.js", "/links.html", "/forms.html", "/classic.html", "/events.html", "/events.js");
-    Socket socket;
-    ExecutorService executorService;
 
-    public Server(int numberThreadPool) {
-        executorService = Executors.newFixedThreadPool(numberThreadPool);
+public class Server {
+    ExecutorService executorService;
+    final ConcurrentHashMap<String, Handler> handlersGet = new ConcurrentHashMap<>();
+    final ConcurrentHashMap<String, Handler> handlersPost = new ConcurrentHashMap<>();
+
+    final static String GET = "GET";
+    final static String POST = "POST";
+    final int NUMBER_THREAD_POOL = 64;
+
+
+    public Server() {
+        executorService = Executors.newFixedThreadPool(NUMBER_THREAD_POOL);
     }
 
 
-    public void startServer(int port) {
+    public void addHandler(String method, String path, Handler handler) {
+
+        if (method.equals(GET)) {
+            if (!handlersGet.containsKey(path))
+                handlersGet.put(path, handler);
+        }
+
+        if (method.equals(POST)) {
+            if (!handlersPost.containsKey(path))
+                handlersPost.put(path, handler);
+        }
+    }
+
+
+    public void listen(int port) {
         try (final var serverSocket = new ServerSocket(port)) {
             while (true) {
-                socket = serverSocket.accept();
-                executorService.submit(() -> connectionProcessing(socket));
+                final var socket = serverSocket.accept();
+                executorService.execute(() -> {
+                    try {
+                        processRequest(socket);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void connectionProcessing(Socket socket) {
 
-        try (
-                socket;
-                final var in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                final var out = new BufferedOutputStream(socket.getOutputStream());
-        ) {
-            // read only request line for simplicity
-            // must be in form GET /path HTTP/1.1
-            final var requestLine = in.readLine();
-            final var parts = requestLine.split(" ");
+    public void processRequest(Socket socket) throws IOException {
+        try (final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+             final BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream())) {
 
-            if (parts.length != 3) {
-                // just close socket
+            Request request = Request.parse(in);
+
+            if (request == null) {
+                badRequest(out);
                 return;
             }
 
-            final var path = parts[1];
-            if (!VALID_PATHS.contains(path)) {
-                out.write((
-                        "HTTP/1.1 404 Not Found\r\n" +
-                                "Content-Length: 0\r\n" +
-                                "Connection: close\r\n" +
-                                "\r\n"
-                ).getBytes());
-                out.flush();
-                return;
+            if (!request.getMethod().equals(GET) && !request.getMethod().equals(POST))
+                badRequest(out);
+
+            if (request.getMethod().equals(GET)) {
+                if (handlersGet.containsKey(request.getPath())) {
+                    handlersGet.get(request.getPath()).handle(request, out);
+                } else {
+                    notFound(out);
+                }
             }
 
-            final var filePath = Path.of(".", "public", path);
-            final var mimeType = Files.probeContentType(filePath);
-
-            // special case for classic
-            if (path.equals("/classic.html")) {
-                final var template = Files.readString(filePath);
-                final var content = template.replace(
-                        "{time}",
-                        LocalDateTime.now().toString()
-                ).getBytes();
-                out.write((
-                        "HTTP/1.1 200 OK\r\n" +
-                                "Content-Type: " + mimeType + "\r\n" +
-                                "Content-Length: " + content.length + "\r\n" +
-                                "Connection: close\r\n" +
-                                "\r\n"
-                ).getBytes());
-                out.write(content);
-                out.flush();
-                return;
+            if (request.getMethod().contains(POST)) {
+                if (handlersPost.containsKey(request.getPath())) {
+                    handlersPost.get(request.getPath()).handle(request, out);
+                } else {
+                    notFound(out);
+                }
             }
-
-            final var length = Files.size(filePath);
-            out.write((
-                    "HTTP/1.1 200 OK\r\n" +
-                            "Content-Type: " + mimeType + "\r\n" +
-                            "Content-Length: " + length + "\r\n" +
-                            "Connection: close\r\n" +
-                            "\r\n"
-            ).getBytes());
-            Files.copy(filePath, out);
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
+    }
+
+
+    private void badRequest(BufferedOutputStream out) throws IOException {
+        out.write((
+                "HTTP/1.1 400 Bad Request\r\n" +
+                        "Content-Length: 0\r\n" +
+                        "Connection: close\r\n" +
+                        "\r\n"
+        ).getBytes());
+        out.flush();
+    }
+
+
+    private void notFound(BufferedOutputStream out) throws IOException {
+        out.write((
+                "HTTP/1.1 404 Not Found\r\n" +
+                        "Content-Length: 0\r\n" +
+                        "Connection: close\r\n" +
+                        "\r\n"
+        ).getBytes());
+        out.flush();
     }
 }
