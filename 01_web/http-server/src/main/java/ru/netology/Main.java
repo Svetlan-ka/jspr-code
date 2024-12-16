@@ -12,6 +12,8 @@ public class Main {
         // добавление хендлеров (обработчиков)
         server.addHandler("GET", "/index.html", (Main::defaultHandler));
 
+        server.addHandler("GET", "/forms.html", (Main::defaultHandler));
+
         server.addHandler("POST", "/messages", (request, responseStream) ->
                 System.out.println("Hendler с методом POST и путем /messages"));
 

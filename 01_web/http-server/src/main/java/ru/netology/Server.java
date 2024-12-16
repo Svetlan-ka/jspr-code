@@ -3,6 +3,7 @@ package ru.netology;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URISyntaxException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -44,7 +45,7 @@ public class Server {
                 executorService.execute(() -> {
                     try {
                         processRequest(socket);
-                    } catch (IOException e) {
+                    } catch (IOException | URISyntaxException e) {
                         throw new RuntimeException(e);
                     }
                 });
@@ -54,8 +55,7 @@ public class Server {
         }
     }
 
-
-    public void processRequest(Socket socket) throws IOException {
+    public void processRequest(Socket socket) throws IOException, URISyntaxException {
         try (final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              final BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream())) {
 
@@ -65,6 +65,11 @@ public class Server {
                 badRequest(out);
                 return;
             }
+
+            request.getQueryParams();
+            System.out.println();
+            request.getQueryParam("login");
+            request.getQueryParam("password");
 
             if (!request.getMethod().equals(GET) && !request.getMethod().equals(POST))
                 badRequest(out);
