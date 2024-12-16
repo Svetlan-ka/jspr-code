@@ -60,17 +60,10 @@ public class Request {
             if (param.getName().equals(name))
                 searchByName.add(param);
         }
-
-        for (NameValuePair pair : searchByName) {
-            System.out.println(pair.getName() + " : " + pair.getValue());
-        }
         return searchByName;
     }
 
     public List<NameValuePair> getQueryParams() {
-        for (NameValuePair pair : params) {
-            System.out.println(pair.getName() + " : " + pair.getValue());
-        }
         return params;
     }
 }
