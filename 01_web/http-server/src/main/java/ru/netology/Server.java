@@ -40,7 +40,7 @@ public class Server {
 
     public void listen(int port) {
         try (final var serverSocket = new ServerSocket(port)) {
-            while (!serverSocket.isClosed()) {
+            while (true) {
                 final var socket = serverSocket.accept();
                 executorService.execute(() -> {
                     try {
