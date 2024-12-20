@@ -40,7 +40,7 @@ public class Server {
 
     public void listen(int port) {
         try (final var serverSocket = new ServerSocket(port)) {
-            while (true) {
+            while (!serverSocket.isClosed()) {
                 final var socket = serverSocket.accept();
                 executorService.execute(() -> {
                     try {
@@ -55,6 +55,7 @@ public class Server {
         }
     }
 
+
     public void processRequest(Socket socket) throws IOException, URISyntaxException {
         try (final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              final BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream())) {
@@ -65,11 +66,6 @@ public class Server {
                 badRequest(out);
                 return;
             }
-
-            request.getQueryParams();
-            System.out.println();
-            request.getQueryParam("login");
-            request.getQueryParam("password");
 
             if (!request.getMethod().equals(GET) && !request.getMethod().equals(POST))
                 badRequest(out);

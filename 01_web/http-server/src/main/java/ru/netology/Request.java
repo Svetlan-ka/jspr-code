@@ -14,15 +14,17 @@ import java.util.regex.Pattern;
 public class Request {
     private final String method;
     private final String path;
-    private static List<NameValuePair> params;
+    private List<NameValuePair> params = new ArrayList<>();
     private final BufferedReader body;
 
 
-    public Request(String method, String path, BufferedReader body) {
+    public Request(String method, String path, List<NameValuePair> queryString, BufferedReader body) {
         this.method = method;
         this.path = path;
+        this.params = queryString;
         this.body = body;
     }
+
 
     public static Request parse(BufferedReader in) throws IOException {
 
@@ -34,12 +36,11 @@ public class Request {
         }
 
         final var method = parts[0];
-
         final var delimeterPathQuery = parts[1].split(Pattern.quote("?"));
         final var path = delimeterPathQuery[0];
-        params = URLEncodedUtils.parse(delimeterPathQuery[1], StandardCharsets.UTF_8);
+        final var queryString = URLEncodedUtils.parse(delimeterPathQuery[1], StandardCharsets.UTF_8);
 
-        return new Request(method, path, in);
+        return new Request(method, path, queryString, in);
     }
 
     public String getMethod() {
