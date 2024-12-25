@@ -57,7 +57,7 @@ public class Server {
 
 
     public void processRequest(Socket socket) throws IOException, URISyntaxException {
-        try (final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        try (final BufferedInputStream in = new BufferedInputStream(socket.getInputStream());
              final BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream())) {
 
             Request request = Request.parse(in);
@@ -66,6 +66,7 @@ public class Server {
                 badRequest(out);
                 return;
             }
+
 
             if (!request.getMethod().equals(GET) && !request.getMethod().equals(POST))
                 badRequest(out);

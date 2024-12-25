@@ -14,8 +14,10 @@ public class Main {
 
         server.addHandler("GET", "/forms.html", (Main::defaultHandler));
 
-        server.addHandler("POST", "/messages", (request, responseStream) ->
-                System.out.println("Hendler с методом POST и путем /messages"));
+        server.addHandler("GET", "/forms2.html", (Main::defaultHandler));
+
+        server.addHandler("POST", "/forms2.html", (request, responseStream) ->
+                System.out.println("Handler с методом POST и путем /messages"));
 
         server.listen(8080);
     }
