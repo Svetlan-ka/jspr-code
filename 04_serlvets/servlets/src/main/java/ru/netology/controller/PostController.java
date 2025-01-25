@@ -1,6 +1,7 @@
 package ru.netology.controller;
 
 import com.google.gson.Gson;
+import org.springframework.stereotype.Controller;
 import ru.netology.model.Post;
 import ru.netology.service.PostService;
 
@@ -12,7 +13,7 @@ import java.io.Reader;
 public class PostController {
   public static final String APPLICATION_JSON = "application/json";
   private final PostService service;
-  private final var gson = new Gson();
+  private final Gson gson = new Gson();
 
   public PostController(PostService service) {
     this.service = service;
@@ -24,7 +25,7 @@ public class PostController {
     response.getWriter().print(gson.toJson(data));
   }
 
-  public void getById(long id, HttpServletResponse response) {
+  public void getById(long id, HttpServletResponse response) throws IOException {
     final var post = service.getById(id);
     response.getWriter().println(gson.toJson(post));
   }
@@ -36,8 +37,9 @@ public class PostController {
     response.getWriter().print(gson.toJson(data));
   }
 
-  public void removeById(long id, HttpServletResponse response) {
+  public void removeById(long id, HttpServletResponse response) throws IOException {
     service.removeById(id);
+    final var post = service.getById(id);
     response.getWriter().println(gson.toJson(post));
   }
 }

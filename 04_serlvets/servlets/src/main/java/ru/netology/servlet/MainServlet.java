@@ -1,7 +1,7 @@
 package ru.netology.servlet;
 
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import ru.netology.controller.PostController;
-import ru.netology.repository.PostRepository;
 import ru.netology.service.PostService;
 
 import javax.servlet.http.HttpServlet;
@@ -10,9 +10,9 @@ import javax.servlet.http.HttpServletResponse;
 
 public class MainServlet extends HttpServlet {
   private PostController controller;
-  private final var GET = "GET";
-  private final var POST = "POST";
-  private final var DELETE = "DELETE";
+  private final String GET = "GET";
+  private final String POST = "POST";
+  private final String DELETE = "DELETE";
 
   @Override
   public void init() {
@@ -20,7 +20,7 @@ public class MainServlet extends HttpServlet {
 
     final var controller = context.getBean("postController");
     final var service = context.getBean(PostService.class);
-    final var isSame = service = context.getBean("postService");
+    final var isSame = context.getBean("postService");
 
   }
 
