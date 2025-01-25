@@ -1,54 +1,16 @@
 package ru.netology.repository;
 
-import org.springframework.stereotype.Repository;
-import ru.netology.exception.NotFoundException;
 import ru.netology.model.Post;
-
 
 import java.util.List;
 import java.util.Optional;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
-// Stub
-@Repository
-public class PostRepository {
-    private final AtomicLong idPost = new AtomicLong();
-    private final Map<Long, Post> storagePost = new ConcurrentHashMap<>();
+public interface PostRepository {
+    List<Post> all();
 
-    public List<Post> all() {
-        return new ArrayList<>(storagePost.values());
-    }
+    Optional<Post> getById(long id);
 
-    public Optional<Post> getById(long id) {
-        return Optional.ofNullable(storagePost.get(id));
-    }
+    Post save(Post post);
 
-    public Post save(Post post) {
-        var postId = post.getId();
-        if (postId == 0)
-            storagePost.put(idPost.incrementAndGet(), post);
-
-        if (postId != 0) {
-            if (storagePost.containsKey(postId))
-                storagePost.put(postId, post);
-        } else {
-            throw new NotFoundException();
-        }
-
-        return post;
-    }
-
-    public void removeById(long id) {
-        if (storagePost.containsKey(id)) {
-            storagePost.remove(id);
-        } else {
-            throw new NotFoundException();
-        }
-    }
-
+    void removeById(long id);
 }
-
-
